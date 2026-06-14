@@ -4,6 +4,10 @@ const ok = (res, data = null, message = 'Success', statusCode = 200) =>
 const created = (res, data = null, message = 'Created') =>
   res.status(201).json({ success: true, message, data })
 
+// Paginated list response. `meta` comes from utils/pagination.buildPageMeta().
+const paginated = (res, items = [], meta = {}, message = 'Success') =>
+  res.status(200).json({ success: true, message, data: items, pagination: meta })
+
 const badRequest = (res, message = 'Bad request', errors = null) =>
   res.status(400).json({ success: false, message, errors })
 
@@ -22,4 +26,4 @@ const conflict = (res, message = 'Conflict') =>
 const serverError = (res, message = 'Internal server error') =>
   res.status(500).json({ success: false, message })
 
-module.exports = { ok, created, badRequest, unauthorized, forbidden, notFound, conflict, serverError }
+module.exports = { ok, created, paginated, badRequest, unauthorized, forbidden, notFound, conflict, serverError }
