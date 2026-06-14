@@ -7,16 +7,9 @@ const { PUBLIC_ENDPOINTS } = require('./vectorshift.constants')
 
 const router = Router()
 
-/**
- * @swagger
- * tags:
- *   name: VectorShift
- *   description: Enterprise RAG Pipeline Builder — DAG-based AI workflow orchestration
- */
-
 // ── PUBLIC ──────────────────────────────────────────────────────────────────────
-router.get('/info', (req, res) => ok(res, meta, 'VectorShift module info'))
-router.get('/health', (req, res) => ok(res, { status: 'ok', ts: Date.now() }, 'Healthy'))
+router.get('/info',    (req, res) => ok(res, meta, 'VectorShift module info'))
+router.get('/health',  (req, res) => ok(res, { status: 'ok', ts: Date.now() }, 'Healthy'))
 router.get('/options', (req, res) => ok(res, service.options(), 'Pipeline building blocks'))
 
 router.get('/demo/pipelines', (req, res) => {
@@ -61,6 +54,26 @@ router.delete('/pipelines/:id', authMiddleware, requireRole(['admin']), (req, re
   }
 })
 
+// ── Knowledge Base ─────────────────────────────────────────────────────────────
+router.get('/knowledge', authMiddleware, (req, res) =>
+  ok(res, service.listKnowledge(req.query), 'Knowledge chunks')
+)
+
+router.post('/knowledge', authMiddleware, requireRole(['admin', 'manager']), (req, res) => {
+  try {
+    return created(res, service.addKnowledge(req.body || {}), 'Chunk added')
+  } catch (err) {
+    if (err.code === 'BAD_INPUT') return badRequest(res, err.message)
+    throw err
+  }
+})
+
+// ── Models ────────────────────────────────────────────────────────────────────
+router.get('/models', authMiddleware, (req, res) => ok(res, service.listModels(), 'LLM models'))
+
+// ── Metrics ───────────────────────────────────────────────────────────────────
+router.get('/metrics', authMiddleware, (req, res) => ok(res, service.getMetrics(), 'Query metrics'))
+
 const meta = {
   name: 'vectorshift',
   version: 'v1',
@@ -68,13 +81,13 @@ const meta = {
   active: true,
   tech: ['React', 'FastAPI', 'Vector DBs'],
   highlights: [
-    'Interactive DAG-based pipeline builder',
-    'High-performance RAG query execution',
-    'Vector database indexing',
+    'Interactive DAG-based pipeline builder with 4 LLM model options',
+    'Keyword-overlap RAG with scored source chunks — no external vector DB needed',
+    'Live session metrics: query volume, avg similarity, top query frequency',
   ],
   publicEndpoints: PUBLIC_ENDPOINTS,
   defaultUsers: [
-    { username: 'ml_engineer', role: 'admin', description: 'ML engineer — full pipeline control' },
+    { username: 'ml_engineer',  role: 'admin',  description: 'ML engineer — full pipeline control' },
     { username: 'data_analyst', role: 'viewer', description: 'Read-only pipeline viewer' },
   ],
 }

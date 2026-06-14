@@ -7,15 +7,8 @@ const { PUBLIC_ENDPOINTS } = require('./banking.constants')
 
 const router = Router()
 
-/**
- * @swagger
- * tags:
- *   name: Banking Core
- *   description: Distributed banking — async transactions, idempotency, settlement
- */
-
 // ── PUBLIC ──────────────────────────────────────────────────────────────────────
-router.get('/info', (req, res) => ok(res, meta, 'Banking Core module info'))
+router.get('/info',   (req, res) => ok(res, meta, 'Banking Core module info'))
 router.get('/health', (req, res) => ok(res, { status: 'ok', ts: Date.now() }, 'Healthy'))
 
 router.get('/demo/accounts', (req, res) => {
@@ -61,22 +54,32 @@ router.get('/transactions', authMiddleware, (req, res) => {
   return paginated(res, paginate(all, { page, limit }), buildPageMeta({ page, limit, total: all.length }), 'Transaction ledger')
 })
 
+// ── Risk Monitor ──────────────────────────────────────────────────────────────
+router.get('/risk/alerts', authMiddleware, (req, res) =>
+  ok(res, service.getRiskAlerts(), 'Risk alerts')
+)
+
+// ── Compliance ────────────────────────────────────────────────────────────────
+router.get('/compliance', authMiddleware, (req, res) =>
+  ok(res, service.getCompliance(), 'Compliance snapshot')
+)
+
 const meta = {
   name: 'banking-core',
   version: 'v1',
-  description: 'Fault-tolerant distributed banking core — Spring Boot, Kafka, 99.9% reliability.',
+  description: 'Fault-tolerant distributed banking core — async settlement, idempotency, risk monitoring, KYC/AML compliance.',
   active: true,
   tech: ['Spring Boot', 'Kafka', 'Microservices'],
   highlights: [
-    '99.9% reliability with Kafka event streaming',
-    'OAuth2 + JWT banking-grade security',
-    'Idempotent, eventually-consistent transactions',
+    '99.9% reliability with async 202-accepted transaction model',
+    'Rule-based risk alerts: HIGH_VALUE, AML_FLAG, KYC_EXPIRED, CROSS_BORDER',
+    'Per-account KYC/AML compliance snapshot with risk scoring',
   ],
   publicEndpoints: PUBLIC_ENDPOINTS,
   defaultUsers: [
-    { username: 'bank_admin', role: 'admin', description: 'Full banking operations access' },
-    { username: 'teller', role: 'manager', description: 'Transaction processing' },
-    { username: 'auditor', role: 'viewer', description: 'Read-only audit access' },
+    { username: 'bank_admin', role: 'admin',   description: 'Full banking operations access' },
+    { username: 'teller',     role: 'manager', description: 'Transaction processing' },
+    { username: 'auditor',    role: 'viewer',  description: 'Read-only audit access' },
   ],
 }
 

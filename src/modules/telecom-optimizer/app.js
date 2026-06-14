@@ -25,8 +25,6 @@ router.get('/topologies', (req, res) =>
 )
 
 // Paginated demo nodes for any topology (public)
-// ?topology=backbone|metro-ring|hub-spoke|linear-chain|cdn-mesh  (default: backbone)
-// ?page=1&limit=5
 router.get('/demo/nodes', (req, res) => {
   const { page, limit } = parsePagination(req, { defaultLimit: 5 })
   const topologyId = validTopo(req.query.topology)
@@ -63,6 +61,29 @@ router.post('/graph/shortest-path', authMiddleware, (req, res) => {
   }
 })
 
+// ── Benchmark ─────────────────────────────────────────────────────────────────
+// Runs Dijkstra + A* on the same pair and returns a side-by-side comparison.
+router.post('/graph/benchmark', authMiddleware, (req, res) => {
+  const { source, target, topologyId = DEFAULT_TOPOLOGY } = req.body || {}
+
+  if (!source || !target) return badRequest(res, 'source and target node IDs are required')
+  if (!TOPOLOGY_IDS.includes(topologyId)) return badRequest(res, `topologyId must be one of: ${TOPOLOGY_IDS.join(', ')}`)
+
+  try {
+    return ok(res, service.benchmark({ source, target, topologyId }), `Benchmark: Dijkstra vs A* on ${topologyId}`)
+  } catch (err) {
+    if (err.code === 'BAD_NODE') return badRequest(res, err.message)
+    if (err.code === 'NO_PATH')  return notFound(res, err.message)
+    throw err
+  }
+})
+
+// ── Path History ──────────────────────────────────────────────────────────────
+// Returns last 20 paths computed this server session (newest first).
+router.get('/graph/history', authMiddleware, (req, res) =>
+  ok(res, service.getHistory(), 'Path computation history')
+)
+
 const meta = {
   name: 'telecom-optimizer',
   version: 'v1',
@@ -71,8 +92,8 @@ const meta = {
   tech: ['Node.js', 'Graph Theory', 'React'],
   highlights: [
     '5 built-in topology templates (backbone, metro-ring, hub-spoke, submarine-cable, cdn-mesh)',
-    'Dijkstra and A* with admissible heuristic — no Python required',
-    '130% faster path detection vs BFS traversal',
+    'Dijkstra vs A* benchmark: side-by-side exploration count + admissibility proof',
+    'Path history ring buffer: last 20 computed routes persisted in session',
   ],
   publicEndpoints: PUBLIC_ENDPOINTS,
   defaultUsers: [

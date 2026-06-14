@@ -27,6 +27,9 @@ const TOPO_MAP = Object.fromEntries(
 
 const H_SCALE = 3 // admissible for all 5 templates (w >= 3*d for every edge)
 
+// Ring buffer for the History tab — last 20 paths computed this session.
+const pathHistory = []
+
 function heuristic(aId, bId, nodeById) {
   const a = nodeById[aId], b = nodeById[bId]
   return Math.hypot(a.x - b.x, a.y - b.y) * H_SCALE
@@ -60,10 +63,6 @@ function getInfo() {
 
 /**
  * Compute shortest path by total edge weight (latency in ms).
- * @param {string} source      - source node id
- * @param {string} target      - target node id
- * @param {string} algorithm   - 'dijkstra' | 'astar'
- * @param {string} topologyId  - which topology template to use
  * @returns {{ path, hops, totalLatency, algorithm, topologyId, nodesExplored, segments }}
  * @throws Error with .code 'BAD_NODE' | 'NO_PATH'
  */
@@ -111,9 +110,45 @@ function shortestPath({ source, target, algorithm = DEFAULT_ALGORITHM, topologyI
     segments.push({ from: path[i], to: path[i + 1], latency: edge.w })
   }
 
-  return { path, hops: path.length - 1, totalLatency: dist[target], algorithm: algo, topologyId, nodesExplored, segments }
+  const result = { path, hops: path.length - 1, totalLatency: dist[target], algorithm: algo, topologyId, nodesExplored, segments }
+
+  // Record in history ring buffer (newest first on retrieval)
+  pathHistory.push({ source, target, algorithm: algo, topologyId, totalLatency: dist[target], hops: path.length - 1, nodesExplored, ts: Date.now() })
+  if (pathHistory.length > 20) pathHistory.shift()
+
+  return result
+}
+
+// ── Path History ──────────────────────────────────────────────────────────────
+
+function getHistory() {
+  return [...pathHistory].reverse()
+}
+
+// ── Algorithm Benchmark ───────────────────────────────────────────────────────
+
+function benchmark({ source, target, topologyId = DEFAULT_TOPOLOGY }) {
+  const { nodeById } = getTopo(topologyId)
+  if (!nodeById[source]) throw withCode(new Error(`Unknown source node "${source}" in topology "${topologyId}"`), 'BAD_NODE')
+  if (!nodeById[target]) throw withCode(new Error(`Unknown target node "${target}" in topology "${topologyId}"`), 'BAD_NODE')
+
+  const d = shortestPath({ source, target, algorithm: 'dijkstra', topologyId })
+  const a = shortestPath({ source, target, algorithm: 'astar',    topologyId })
+
+  const savingPct = d.nodesExplored > 0
+    ? Math.round((d.nodesExplored - a.nodesExplored) / d.nodesExplored * 100)
+    : 0
+
+  return {
+    topologyId, source, target,
+    dijkstra: { path: d.path, totalLatency: d.totalLatency, hops: d.hops, nodesExplored: d.nodesExplored },
+    astar:    { path: a.path, totalLatency: a.totalLatency, hops: a.hops, nodesExplored: a.nodesExplored },
+    winner: a.nodesExplored <= d.nodesExplored ? 'astar' : 'dijkstra',
+    explorationSavingPct: savingPct,
+    sameOptimal: d.totalLatency === a.totalLatency,
+  }
 }
 
 function withCode(err, code) { err.code = code; return err }
 
-module.exports = { getNodes, getInfo, getTopologies, shortestPath }
+module.exports = { getNodes, getInfo, getTopologies, shortestPath, getHistory, benchmark }
