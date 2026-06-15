@@ -49,7 +49,36 @@ function tokenize(str) {
   return str.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(Boolean)
 }
 
-function runQuery({ pipelineId, query }) {
+// Jaccard similarity over two term sets (used by MMR re-ranking).
+function jaccard(a, b) {
+  let inter = 0
+  for (const t of a) if (b.has(t)) inter++
+  const union = a.size + b.size - inter
+  return union ? inter / union : 0
+}
+
+/**
+ * Maximal Marginal Relevance — re-rank candidates to balance relevance against
+ * diversity, so the top-K aren't near-duplicate passages. λ tunes the trade-off:
+ * 1.0 = pure relevance, 0.0 = pure diversity.
+ */
+function mmrSelect(candidates, k, lambda = 0.7) {
+  const selected = []
+  const pool = [...candidates]
+  while (selected.length < k && pool.length) {
+    let bestIdx = 0, bestVal = -Infinity
+    for (let i = 0; i < pool.length; i++) {
+      let maxSim = 0
+      for (const s of selected) maxSim = Math.max(maxSim, jaccard(pool[i]._terms, s._terms))
+      const val = lambda * pool[i].score - (1 - lambda) * maxSim
+      if (val > bestVal) { bestVal = val; bestIdx = i }
+    }
+    selected.push(pool.splice(bestIdx, 1)[0])
+  }
+  return selected
+}
+
+function runQuery({ pipelineId, query, mmr = false, lambda = 0.7 }) {
   const pipeline = pipelines.find(p => p.id === pipelineId)
   if (!pipeline) throw withCode(new Error('Pipeline not found'), 'NOT_FOUND')
   if (!query || !query.trim()) throw withCode(new Error('Query text is required'), 'BAD_INPUT')
@@ -64,13 +93,15 @@ function runQuery({ pipelineId, query }) {
     for (const t of qSet) if (cSet.has(t)) overlap++
     const denom = Math.sqrt(qSet.size || 1) * Math.sqrt(cSet.size || 1)
     const sim = denom ? overlap / denom : 0
-    return { ...chunk, score: Math.min(0.98, Math.round((0.35 + sim * 3.2) * 100) / 100), overlap }
+    return { ...chunk, _terms: cSet, score: Math.min(0.98, Math.round((0.35 + sim * 3.2) * 100) / 100), overlap }
   })
 
-  const top = scored
-    .filter(c => c.overlap > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, pipeline.topK)
+  const candidates = scored.filter(c => c.overlap > 0).sort((a, b) => b.score - a.score)
+  const reranked = !!(mmr && candidates.length > 1)
+
+  const top = reranked
+    ? mmrSelect(candidates, pipeline.topK, Math.min(Math.max(Number(lambda) || 0.7, 0), 1))
+    : candidates.slice(0, pipeline.topK)
 
   const sources = top.length ? top : [{ ...scored[0], score: 0.32 }]
   const answer = synthesize(query, sources)
@@ -86,6 +117,8 @@ function runQuery({ pipelineId, query }) {
     model: pipeline.llm,
     vectorDb: pipeline.vectorDb,
     answer,
+    reranked,
+    retrieval: reranked ? `MMR (λ=${Math.min(Math.max(Number(lambda) || 0.7, 0), 1)})` : 'top-K cosine',
     sources: sources.map(s => ({ id: s.id, source: s.source, page: s.page, score: s.score, text: s.text })),
     tokens: Math.round((answer.length + sources.reduce((n, s) => n + s.text.length, 0)) / 4),
     grounded: top.length > 0,

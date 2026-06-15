@@ -6,7 +6,7 @@
  * settled. Idempotency key prevents double-submission. Risk alerts and compliance
  * snapshots are computed from the in-memory account and transaction state.
  */
-const { DEMO_ACCOUNTS, ACCOUNT_COMPLIANCE, SEED_RISK_ALERTS, TIMING } = require('./banking.constants')
+const { DEMO_ACCOUNTS, ACCOUNT_COMPLIANCE, SEED_RISK_ALERTS, FX_RATES, TIMING } = require('./banking.constants')
 
 let accounts  = DEMO_ACCOUNTS.map(a => ({ ...a }))
 const txById  = new Map()
@@ -14,6 +14,29 @@ const idempotency = new Map()
 let seq = 1
 
 function listAccounts() { return accounts }
+
+// ── FX ──────────────────────────────────────────────────────────────────────
+// Convert `amount` from one currency to another via USD-relative rates.
+function fxRate(from, to) {
+  const f = FX_RATES[from], t = FX_RATES[to]
+  if (!f || !t) return 1
+  return f / t
+}
+function convert(amount, from, to) {
+  return Math.round(amount * fxRate(from, to) * 100) / 100
+}
+function getRates() {
+  return {
+    base: 'USD',
+    rates: FX_RATES,
+    // Flattened pair list so the UI can render a quick reference table.
+    pairs: Object.keys(FX_RATES).flatMap(from =>
+      Object.keys(FX_RATES).filter(to => to !== from).map(to => ({
+        from, to, rate: Math.round(fxRate(from, to) * 10000) / 10000,
+      }))
+    ),
+  }
+}
 
 function settleIfNeeded(tx) {
   if (tx.status === 'settled' || tx.status === 'failed') return tx
@@ -24,7 +47,8 @@ function settleIfNeeded(tx) {
     const from = accounts.find(a => a.id === tx.from)
     if (from) from.balance = Math.max(0, from.balance - tx.amount)
     const to = accounts.find(a => a.id === tx.to)
-    if (to) to.balance += tx.amount
+    // Credit the destination in ITS currency (converted for cross-currency transfers).
+    if (to) to.balance += (tx.creditAmount ?? tx.amount)
   } else if (elapsed >= TIMING.PROCESSING_AFTER_MS) {
     tx.status = 'processing'
   }
@@ -46,10 +70,20 @@ function submitTransaction({ from, to, amount, idempotencyKey }) {
     return { ...publicTx(settleIfNeeded(existing)), idempotentReplay: true }
   }
 
+  const fromCurrency = fromAcc.currency
+  const toCurrency   = toAcc.currency
+  const crossCurrency = fromCurrency !== toCurrency
+  const rate         = fxRate(fromCurrency, toCurrency)
+  const creditAmount = crossCurrency ? convert(amount, fromCurrency, toCurrency) : amount
+
   const tx = {
     id: `TX-${String(seq++).padStart(5, '0')}`,
     from, to, amount,
-    currency: fromAcc.currency,
+    currency: fromCurrency,           // debit currency (source)
+    toCurrency,                        // credit currency (destination)
+    creditAmount,                      // amount credited to destination (converted)
+    fxRate: Math.round(rate * 10000) / 10000,
+    crossCurrency,
     idempotencyKey: idempotencyKey || null,
     status: 'pending',
     applied: false,
@@ -74,6 +108,8 @@ function listTransactions() {
 function publicTx(tx) {
   return {
     id: tx.id, from: tx.from, to: tx.to, amount: tx.amount, currency: tx.currency,
+    toCurrency: tx.toCurrency, creditAmount: tx.creditAmount, fxRate: tx.fxRate,
+    crossCurrency: tx.crossCurrency,
     status: tx.status, idempotencyKey: tx.idempotencyKey, createdAt: tx.createdAt,
   }
 }
@@ -116,4 +152,4 @@ function getCompliance() {
 
 function withCode(err, code) { err.code = code; return err }
 
-module.exports = { listAccounts, submitTransaction, getStatus, listTransactions, getRiskAlerts, getCompliance }
+module.exports = { listAccounts, submitTransaction, getStatus, listTransactions, getRiskAlerts, getCompliance, getRates }

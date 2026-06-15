@@ -125,6 +125,129 @@ function getHistory() {
   return [...pathHistory].reverse()
 }
 
+// ── Yen's K-Shortest Loopless Paths ───────────────────────────────────────────
+// Finds the K best *distinct* routes between two nodes (not just the single
+// shortest). Each spur is solved with Dijkstra over the graph minus the edges
+// and nodes that would recreate an already-found path. This is what carriers use
+// to pre-provision backup routes for failover.
+
+const edgeKey = (a, b) => (a < b ? `${a}|${b}` : `${b}|${a}`)
+
+function getWeight(topo, a, b) {
+  const e = topo.adj[a]?.find(x => x.to === b)
+  return e ? e.w : Infinity
+}
+
+function sumPath(topo, path) {
+  let s = 0
+  for (let i = 0; i < path.length - 1; i++) s += getWeight(topo, path[i], path[i + 1])
+  return s
+}
+
+function buildSegments(topo, path) {
+  const segs = []
+  for (let i = 0; i < path.length - 1; i++) segs.push({ from: path[i], to: path[i + 1], latency: getWeight(topo, path[i], path[i + 1]) })
+  return segs
+}
+
+// Dijkstra that honours removed edges (by undirected key) and removed nodes.
+function dijkstraWithRemovals(topo, source, target, removedEdges, removedNodes) {
+  const { adj } = topo
+  const ids = Object.keys(adj)
+  const dist = {}, prev = {}
+  for (const id of ids) dist[id] = Infinity
+  dist[source] = 0
+
+  const visited = new Set()
+  const open = new Set(ids.filter(n => !removedNodes.has(n)))
+  open.add(source); open.add(target)
+
+  while (open.size) {
+    let cur = null, best = Infinity
+    for (const id of open) if (dist[id] < best) { best = dist[id]; cur = id }
+    if (cur === null || dist[cur] === Infinity) break
+    open.delete(cur); visited.add(cur)
+    if (cur === target) break
+
+    for (const { to, w } of adj[cur]) {
+      if (visited.has(to)) continue
+      if (removedNodes.has(to) && to !== target) continue
+      if (removedEdges.has(edgeKey(cur, to))) continue
+      const alt = dist[cur] + w
+      if (alt < dist[to]) { dist[to] = alt; prev[to] = cur }
+    }
+  }
+
+  if (dist[target] === Infinity) return null
+  const path = []
+  for (let at = target; at != null; at = prev[at]) path.unshift(at)
+  return { path, cost: dist[target] }
+}
+
+function kShortestPaths({ source, target, topologyId = DEFAULT_TOPOLOGY, K = 3 }) {
+  const topo = getTopo(topologyId)
+  const { nodeById } = topo
+  if (!nodeById[source]) throw withCode(new Error(`Unknown source node "${source}" in topology "${topologyId}"`), 'BAD_NODE')
+  if (!nodeById[target]) throw withCode(new Error(`Unknown target node "${target}" in topology "${topologyId}"`), 'BAD_NODE')
+  K = Math.min(Math.max(parseInt(K, 10) || 3, 1), 8)
+
+  const first = dijkstraWithRemovals(topo, source, target, new Set(), new Set())
+  if (!first) throw withCode(new Error('No route between nodes'), 'NO_PATH')
+
+  const A = [first]   // confirmed shortest paths (ascending cost)
+  const B = []        // candidate paths
+
+  const seen = new Set([first.path.join('>')])
+
+  while (A.length < K) {
+    const prevPath = A[A.length - 1].path
+
+    for (let i = 0; i < prevPath.length - 1; i++) {
+      const spurNode = prevPath[i]
+      const rootPath = prevPath.slice(0, i + 1)
+
+      const removedEdges = new Set()
+      const removedNodes = new Set()
+
+      for (const p of A) {
+        if (p.path.length > i && p.path.slice(0, i + 1).join('>') === rootPath.join('>')) {
+          removedEdges.add(edgeKey(p.path[i], p.path[i + 1]))
+        }
+      }
+      for (const n of rootPath.slice(0, -1)) removedNodes.add(n)
+
+      const spur = dijkstraWithRemovals(topo, spurNode, target, removedEdges, removedNodes)
+      if (!spur) continue
+
+      const totalPath = rootPath.slice(0, -1).concat(spur.path)
+      const key = totalPath.join('>')
+      if (seen.has(key) || B.some(b => b.path.join('>') === key)) continue
+
+      B.push({ path: totalPath, cost: sumPath(topo, totalPath) })
+    }
+
+    if (!B.length) break
+    B.sort((a, b) => a.cost - b.cost)
+    const next = B.shift()
+    seen.add(next.path.join('>'))
+    A.push(next)
+  }
+
+  const best = A[0].cost
+  return {
+    source, target, topologyId,
+    count: A.length,
+    paths: A.map((p, i) => ({
+      rank: i + 1,
+      path: p.path,
+      totalLatency: p.cost,
+      hops: p.path.length - 1,
+      extraLatency: p.cost - best, // ms slower than the optimal route
+      segments: buildSegments(topo, p.path),
+    })),
+  }
+}
+
 // ── Algorithm Benchmark ───────────────────────────────────────────────────────
 
 function benchmark({ source, target, topologyId = DEFAULT_TOPOLOGY }) {
@@ -151,4 +274,4 @@ function benchmark({ source, target, topologyId = DEFAULT_TOPOLOGY }) {
 
 function withCode(err, code) { err.code = code; return err }
 
-module.exports = { getNodes, getInfo, getTopologies, shortestPath, getHistory, benchmark }
+module.exports = { getNodes, getInfo, getTopologies, shortestPath, getHistory, benchmark, kShortestPaths }

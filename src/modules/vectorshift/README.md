@@ -1,5 +1,7 @@
 # Module: vectorshift
 
+> **🔗 Live API:** https://all-live-project-api-center-rupesh-klr.holistichealervedika.com/api/vectorshift/v1/info (public)
+
 > Node.js · Express · FastAPI bridge · Vector DBs (Chroma / Pinecone / Weaviate)
 
 VectorShift Enterprise RAG Pipeline Builder — REST API for creating, managing, and executing Retrieval-Augmented Generation pipelines. Each pipeline is a DAG (directed acyclic graph) connecting a document source, a vector store, and an LLM inference endpoint.

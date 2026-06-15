@@ -54,6 +54,15 @@ const SEED_RISK_ALERTS = [
   },
 ]
 
+// FX rates relative to USD — 1 unit of the currency = N USD.
+// Cross-currency transfers are converted at fromRate/toRate (see banking.service.js).
+const FX_RATES = {
+  USD: 1.00,
+  EUR: 1.08,
+  SGD: 0.74,
+  GBP: 1.27,
+}
+
 // State-machine timings (ms since acceptance) — fast enough for a live demo poll.
 const TIMING = {
   PROCESSING_AFTER_MS: 1200,
@@ -64,4 +73,4 @@ const STATES = ['pending', 'processing', 'settled', 'failed']
 
 const PUBLIC_ENDPOINTS = ['/info', '/health', '/demo/accounts']
 
-module.exports = { DEMO_ACCOUNTS, ACCOUNT_COMPLIANCE, SEED_RISK_ALERTS, TIMING, STATES, PUBLIC_ENDPOINTS }
+module.exports = { DEMO_ACCOUNTS, ACCOUNT_COMPLIANCE, SEED_RISK_ALERTS, FX_RATES, TIMING, STATES, PUBLIC_ENDPOINTS }

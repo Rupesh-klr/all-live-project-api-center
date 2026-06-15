@@ -1,6 +1,29 @@
-# Portfolio Hub — API Center
+# ⚙️ Portfolio Hub — API Center
 
+[![Live API](https://img.shields.io/badge/Live_API-online-22c55e?style=for-the-badge&logo=node.js&logoColor=white)](https://all-live-project-api-center-rupesh-klr.holistichealervedika.com)
+[![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=node.js&logoColor=white)](#)
+[![Express](https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express&logoColor=white)](#)
+[![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](#)
+[![JWT](https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white)](#)
+
+> **🔗 Live API:** **https://all-live-project-api-center-rupesh-klr.holistichealervedika.com**
+> **🖥️ Frontend:** https://all-live-project-rupesh-klr.holistichealervedika.com/
 > Node.js · Express · MongoDB · JWT · AES-256 · Winston · Swagger
+
+**A production-architecture backend** powering the Portfolio Hub. One server, one auth layer,
+pluggable modules — each module is a self-contained folder you can delete to remove or create
+to add, with **zero changes to `server.js`**.
+
+> 💡 **Probe it live:** `GET /health` and `GET /api/modules` are public — try
+> `https://all-live-project-api-center-rupesh-klr.holistichealervedika.com/api/modules`.
+
+### Why this stands out
+- **Dynamic module loading** — server scans `src/modules/` at startup and mounts only modules where `meta.active === true`.
+- **Real algorithms, not wrappers** — Dijkstra/A* + Yen’s k-shortest-paths, keyword-overlap RAG with scored retrieval, async idempotent settlement, cross-currency FX.
+- **Layered security** — bot protection, rate limiting, CORS subdomain matching, IP/host whitelist, Helmet, AES-in-transit + bcrypt-at-rest, active token revocation.
+- **Self-documenting** — Swagger UI auto-generated from JSDoc across every module.
+
+---
 
 Centralized backend for all portfolio modules. One server, one auth layer, pluggable modules. Each module is a self-contained folder — delete it to remove it, create it to add it. Zero changes to `server.js` required.
 

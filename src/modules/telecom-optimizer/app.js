@@ -78,6 +78,24 @@ router.post('/graph/benchmark', authMiddleware, (req, res) => {
   }
 })
 
+// ── Yen's K-Shortest Paths ────────────────────────────────────────────────────
+// Returns the K best distinct routes (failover/backup-route planning).
+// Body: { source, target, topologyId?, K? }
+router.post('/graph/k-paths', authMiddleware, (req, res) => {
+  const { source, target, topologyId = DEFAULT_TOPOLOGY, K = 3 } = req.body || {}
+
+  if (!source || !target) return badRequest(res, 'source and target node IDs are required')
+  if (!TOPOLOGY_IDS.includes(topologyId)) return badRequest(res, `topologyId must be one of: ${TOPOLOGY_IDS.join(', ')}`)
+
+  try {
+    return ok(res, service.kShortestPaths({ source, target, topologyId, K }), `Top ${K} routes via Yen's algorithm on ${topologyId}`)
+  } catch (err) {
+    if (err.code === 'BAD_NODE') return badRequest(res, err.message)
+    if (err.code === 'NO_PATH')  return notFound(res, err.message)
+    throw err
+  }
+})
+
 // ── Path History ──────────────────────────────────────────────────────────────
 // Returns last 20 paths computed this server session (newest first).
 router.get('/graph/history', authMiddleware, (req, res) =>

@@ -1,5 +1,7 @@
 # Module: whatsapp-crm
 
+> **🔗 Live API:** https://all-live-project-api-center-rupesh-klr.holistichealervedika.com/api/whatsapp-crm/v1/info (public)
+
 > Node.js · Express · WhatsApp Business API · Webhooks · Workflow Engine
 
 Automated WhatsApp CRM Engine — inbound webhook handling, contact lifecycle management, outbound message dispatch, and no-code automation workflows. Built for high-concurrency webhook ingestion with contact deduplication and conversation threading.

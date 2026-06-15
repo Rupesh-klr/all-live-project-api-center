@@ -54,6 +54,9 @@ router.get('/transactions', authMiddleware, (req, res) => {
   return paginated(res, paginate(all, { page, limit }), buildPageMeta({ page, limit, total: all.length }), 'Transaction ledger')
 })
 
+// ── FX rates (public reference table) ──────────────────────────────────────────
+router.get('/fx/rates', (req, res) => ok(res, service.getRates(), 'FX rates'))
+
 // ── Risk Monitor ──────────────────────────────────────────────────────────────
 router.get('/risk/alerts', authMiddleware, (req, res) =>
   ok(res, service.getRiskAlerts(), 'Risk alerts')

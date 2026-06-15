@@ -1,5 +1,7 @@
 # Module: banking-core
 
+> **🔗 Live API:** https://all-live-project-api-center-rupesh-klr.holistichealervedika.com/api/banking-core/v1/info (public)
+
 > Node.js · Express · Kafka (bridge) · Idempotency · Distributed Transactions
 
 Distributed Banking Core — high-throughput transaction processing API with event-driven submission. Transactions are published to Kafka and processed asynchronously; the status endpoint polls the result. Designed for 99.9% fault-tolerance with idempotency key support to prevent duplicate transactions.

@@ -1,5 +1,7 @@
 # Telecom Optimizer — Backend Module (reference pattern)
 
+> **🔗 Live API:** https://all-live-project-api-center-rupesh-klr.holistichealervedika.com/api/telecom-optimizer/v1/topologies (public)
+
 > Node.js · Express · Graph Theory (Dijkstra / A*) · optional Python (FastAPI) bridge
 
 The **reference backend module**. Layered into data / logic / transport so any developer

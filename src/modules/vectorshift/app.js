@@ -36,7 +36,8 @@ router.post('/pipelines', authMiddleware, requireRole(['admin', 'manager']), (re
 
 router.post('/pipelines/:id/run', authMiddleware, (req, res) => {
   try {
-    const result = service.runQuery({ pipelineId: req.params.id, query: (req.body || {}).query })
+    const { query, mmr, lambda } = req.body || {}
+    const result = service.runQuery({ pipelineId: req.params.id, query, mmr, lambda })
     return ok(res, result, 'Query executed')
   } catch (err) {
     if (err.code === 'BAD_INPUT') return badRequest(res, err.message)
