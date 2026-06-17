@@ -1,0 +1,28 @@
+{
+  "free": {
+    "id": "free",
+    "label": "Free",
+    "priceInr": 0,
+    "billing": "free",
+    "maxPages": 10,
+    "features": {
+      "aiSuggestions": false,
+      "customDomainHint": true,
+      "htmlExport": true
+    },
+    "note": "Publish up to 10 pages for free."
+  },
+  "advanced": {
+    "id": "advanced",
+    "label": "Advanced",
+    "priceInr": 100,
+    "billing": "yearly",
+    "maxPages": 20,
+    "features": {
+      "aiSuggestions": true,
+      "customDomainHint": true,
+      "htmlExport": true
+    },
+    "note": "20 pages/year plus AI automation suggestions (₹100/year)."
+  }
+}

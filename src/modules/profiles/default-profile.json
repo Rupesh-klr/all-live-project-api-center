@@ -1,0 +1,62 @@
+{
+  "meta": {
+    "templateName": "Profilo Designer",
+    "isDefault": true,
+    "note": "Default/basic template served when a slug has no published profile yet."
+  },
+  "person": {
+    "name": { "en": "Your Name", "te": "మీ పేరు" },
+    "title": { "en": "Your Title / Role", "te": "మీ హోదా / పాత్ర" },
+    "tagline": {
+      "en": "This page is available. Claim it, paste your JSON, preview and publish.",
+      "te": "ఈ పేజీ అందుబాటులో ఉంది. దీన్ని క్లెయిమ్ చేసి, మీ JSON పేస్ట్ చేసి, ప్రివ్యూ చేసి ప్రచురించండి."
+    },
+    "location": { "en": "Your City", "te": "మీ నగరం" },
+    "primaryLanguage": { "en": "English", "te": "తెలుగు" },
+    "images": [{ "src": "/images/placeholder.svg", "alt": { "en": "Portrait", "te": "చిత్రం" } }],
+    "social": []
+  },
+  "nav": {
+    "brand": { "en": "Profilo", "te": "ప్రొఫైలో" },
+    "links": [
+      { "id": "about", "label": { "en": "About", "te": "గురించి" } },
+      { "id": "contact", "label": { "en": "Contact", "te": "సంప్రదించండి" } }
+    ]
+  },
+  "ui": {
+    "cta": { "en": "Get started", "te": "ప్రారంభించండి" },
+    "ctaSecondary": { "en": "Learn more", "te": "మరింత తెలుసుకోండి" },
+    "themeLight": { "en": "Light", "te": "లైట్" },
+    "themeDark": { "en": "Dark", "te": "డార్క్" },
+    "scrollTop": { "en": "Back to top", "te": "పైకి వెళ్లండి" }
+  },
+  "sections": [
+    {
+      "id": "hero",
+      "type": "hero",
+      "attention": { "en": "Profilo Designer · Free profile template", "te": "ప్రొఫైలో డిజైనర్ · ఉచిత ప్రొఫైల్ టెంప్లేట్" },
+      "headline": { "en": "This page is ready for your profile", "te": "ఈ పేజీ మీ ప్రొఫైల్ కోసం సిద్ధంగా ఉంది" },
+      "headlineAccent": { "en": "Edit everything from one JSON", "te": "ఒకే JSON నుండి అన్నీ మార్చండి" },
+      "description": {
+        "en": "Paste your JSON, choose a template, preview it as a public page, then publish. No code needed.",
+        "te": "మీ JSON పేస్ట్ చేయండి, టెంప్లేట్ ఎంచుకోండి, పబ్లిక్ పేజీగా ప్రివ్యూ చేసి ప్రచురించండి. కోడ్ అవసరం లేదు."
+      },
+      "highlights": [
+        { "icon": "spark", "label": { "en": "Template", "te": "టెంప్లేట్" }, "value": { "en": "Choose a style", "te": "శైలిని ఎంచుకోండి" } },
+        { "icon": "language", "label": { "en": "Languages", "te": "భాషలు" }, "value": { "en": "EN + తె", "te": "EN + తె" } }
+      ]
+    },
+    {
+      "id": "cta",
+      "type": "cta",
+      "heading": { "en": "Make this page yours", "te": "ఈ పేజీని మీదిగా చేసుకోండి" },
+      "subheading": {
+        "en": "Create a profile, paste your JSON and publish to this address.",
+        "te": "ఒక ప్రొఫైల్ సృష్టించి, మీ JSON పేస్ట్ చేసి ఈ చిరునామాకు ప్రచురించండి."
+      }
+    }
+  ],
+  "footer": {
+    "copyright": { "en": "© Profilo Designer", "te": "© ప్రొఫైలో డిజైనర్" }
+  }
+}
