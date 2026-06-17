@@ -31,6 +31,7 @@ router.get('/plans', ctrl.getPlans)
 // Isolated profile-builder accounts (separate from the main /api/auth/v1).
 router.post('/auth/signup', ctrlAuth.signup)
 router.post('/auth/login', ctrlAuth.login)
+router.post('/auth/forgot', ctrlAuth.forgot)
 router.get('/auth/me', requireProfileUser, ctrlAuth.me)
 
 // Create — binds ownerUserId when a profile-account token is supplied.

@@ -2,16 +2,17 @@ const mongoose = require('mongoose')
 const bcrypt = require('bcryptjs')
 
 /**
- * ISOLATED user collection for the Profilo builder.
+ * ISOLATED user collection for the Profilo builder ("profile_users").
+ * Separate from the shared `users` collection / `/api/auth/v1` so builder
+ * signups can NEVER affect the main app's auth.
  *
- * Intentionally SEPARATE from the shared `users` collection (src/models/User.model.js)
- * and the `/api/auth/v1` module, so profile-builder signups can NEVER affect the main
- * app's auth/users. Collection name: "profile_users".
+ * Identity is the USERNAME (unique). Email is OPTIONAL and intentionally NOT
+ * unique — duplicate emails are allowed.
  */
 const profileUserSchema = new mongoose.Schema(
   {
-    email: { type: String, required: true, unique: true, trim: true, lowercase: true },
-    // bcrypt hash — never stored raw, never selected by default
+    username: { type: String, required: true, unique: true, trim: true, lowercase: true },
+    email: { type: String, default: '', trim: true, lowercase: true }, // duplicates allowed
     passwordHash: { type: String, required: true, select: false },
     name: { type: String, default: '' },
     isActive: { type: Boolean, default: true },

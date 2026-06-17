@@ -9,7 +9,7 @@ const { unauthorized } = require('../../utils/response')
  */
 function signProfileToken(user) {
   return jwt.sign(
-    { userId: user._id, email: user.email, scope: 'profile' },
+    { userId: user._id, username: user.username, scope: 'profile' },
     process.env.JWT_ACCESS_SECRET,
     { expiresIn: process.env.JWT_PROFILE_EXPIRY || '30d' }
   )
@@ -30,7 +30,7 @@ function decodeProfileToken(req) {
 async function requireProfileUser(req, res, next) {
   const decoded = decodeProfileToken(req)
   if (!decoded) return unauthorized(res, 'Login required')
-  req.user = { userId: decoded.userId, email: decoded.email }
+  req.user = { userId: decoded.userId, username: decoded.username }
   next()
 }
 
