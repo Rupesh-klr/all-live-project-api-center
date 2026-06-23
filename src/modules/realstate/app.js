@@ -1,6 +1,6 @@
 const { Router } = require('express')
 const ctrl = require('./realstate.controller')
-const { requireAuth, requireAdmin, requireSuperAdmin, requireVendor } = require('./realstate.middleware')
+const { requireAuth, requireAdmin, requireVendor } = require('./realstate.middleware')
 
 /**
  * @module realstate
@@ -36,7 +36,7 @@ router.get('/admin/inquiries/pending', requireAuth, requireAdmin, ctrl.pendingAp
 router.patch('/inquiries/:id/approve', requireAuth, requireAdmin, ctrl.approveInquiry)
 router.get('/admin/users', requireAuth, requireAdmin, ctrl.listUsers)
 router.patch('/admin/users/:id/role', requireAuth, requireAdmin, ctrl.changeRole)
-router.post('/admin/users', requireAuth, requireSuperAdmin, ctrl.createUser)
+router.post('/admin/users', requireAuth, requireAdmin, ctrl.createUser)
 router.get('/admin/stats', requireAuth, requireAdmin, ctrl.stats)
 
 // ── Property by id (status migration is admin-gated; edit/delete owner-gated) ──────

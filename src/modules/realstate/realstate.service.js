@@ -342,12 +342,14 @@ async function changeUserRole(targetId, newRole, actor) {
 }
 
 /**
- * Super-admin only: directly create an elevated account (super-admin / admin / vendor).
+ * Admin / super-admin: directly create an account.
+ *  - super-admin may create any role (incl. admin / super-admin).
+ *  - admin may create user / vendor / admin, but NOT super-admin.
  */
 async function createElevatedUser(data, actor) {
-  if (actor.role !== ROLES.SUPER_ADMIN) throw err('Only a super-admin can create elevated accounts', 403)
-  const role = data.role
-  if (!SUPER_ASSIGNABLE.includes(role)) throw err(`Invalid role '${role}'`, 400)
+  const allowed = actor.role === ROLES.SUPER_ADMIN ? SUPER_ASSIGNABLE : ADMIN_ASSIGNABLE
+  const role = data.role || ROLES.USER
+  if (!allowed.includes(role)) throw err(`Role '${actor.role}' cannot create an account with role '${role}'`, 403)
   if (!data.username || !data.email || !data.password) throw err('username, email and password are required')
 
   const exists = await User.findOne({ $or: [{ username: String(data.username).toLowerCase() }, { email: String(data.email).toLowerCase() }] })
