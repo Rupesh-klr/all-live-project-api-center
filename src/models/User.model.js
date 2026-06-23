@@ -7,7 +7,10 @@ const userSchema = new mongoose.Schema({
   phoneNumber: { type: String, unique: true, sparse: true, trim: true },
   // Password stored as bcrypt hash — NEVER stored raw
   passwordHash: { type: String, required: true, select: false },
-  role:        { type: String, enum: ['admin', 'manager', 'viewer', 'guest'], default: 'viewer' },
+  // Global role set, shared across all modules.
+  //   super-admin / admin / vendor / user  → real-estate module
+  //   manager / viewer / guest             → other portfolio modules (kept for back-compat)
+  role:        { type: String, enum: ['super-admin', 'admin', 'manager', 'vendor', 'user', 'viewer', 'guest'], default: 'user' },
   // Which modules this user can access. Empty array = all modules.
   moduleAccess: { type: [String], default: [] },
   isActive:    { type: Boolean, default: true },

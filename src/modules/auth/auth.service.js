@@ -107,7 +107,7 @@ async function register(data, meta = {}) {
     phoneNumber:  data.phoneNumber,
     passwordHash: data.password,   // pre-save hook will hash this
     displayName:  data.displayName || data.username,
-    role:         'viewer',
+    role:         'user',          // common signups are base "user"; roles elevated by admins
     moduleAccess: [],              // empty = access to all modules
   })
 
